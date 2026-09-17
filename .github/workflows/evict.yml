@@ -1,0 +1,111 @@
+# Sweeps previews that should no longer be here.
+#
+# gnolang/gno deletes a preview when its pull request closes, but that can be missed —
+# a workflow failure, a PR closed while a publish was in flight, a preview written
+# before the cleanup job existed. Without a backstop the site grows until it hits the
+# 1 GB GitHub Pages cap, at which point publishing fails for everyone.
+#
+# Three rules, cheapest first: drop previews whose PR is closed, drop previews whose PR
+# has gone quiet, and if the total is still over budget drop the least recently updated
+# until it is not.
+name: evict
+
+on:
+  schedule:
+    - cron: "17 4 * * *"
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: "List what would be removed without removing it"
+        type: boolean
+        default: false
+
+permissions: {}
+
+concurrency:
+  group: previews-write
+  cancel-in-progress: false
+
+env:
+  # A preview whose PR has had no push in this long is stale. Most of gno's open pull
+  # requests are dormant; this is what keeps the live set proportional to active review.
+  STALE_DAYS: "21"
+  # Total budget for pr-*/ in MiB. Well under the 1 GB site cap, because the cap is a
+  # publishing failure and this is a number we choose.
+  BUDGET_MIB: "700"
+
+jobs:
+  evict:
+    if: github.repository == 'gnolang/gno-previews'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # to delete previews from the branch this site is published from
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Sweep
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DRY_RUN: ${{ inputs.dry-run }}
+        run: |
+          set -euo pipefail
+          upstream=gnolang/gno
+          now=$(date -u +%s)
+          stale_before=$(( now - STALE_DAYS * 86400 ))
+          removed=()
+
+          # --- 1 & 2: closed, or quiet -------------------------------------
+          for d in pr-*/; do
+            [ -d "$d" ] || continue
+            n="${d#pr-}"; n="${n%/}"
+            case "$n" in ''|*[!0-9]*) echo "skip non-numeric $d"; continue;; esac
+
+            # A PR that 404s was deleted or never existed: drop it either way.
+            if ! meta=$(gh api "repos/$upstream/pulls/$n" --jq '"\(.state) \(.updated_at)"' 2>/dev/null); then
+              echo "pr-$n: no such pull request upstream"
+              removed+=("$n"); continue
+            fi
+            state=${meta%% *}
+            updated=${meta##* }
+            if [ "$state" != "open" ]; then
+              echo "pr-$n: $state"
+              removed+=("$n"); continue
+            fi
+            if [ "$(date -u -d "$updated" +%s)" -lt "$stale_before" ]; then
+              echo "pr-$n: open but quiet since $updated"
+              removed+=("$n")
+            fi
+          done
+
+          for n in ${removed[@]+"${removed[@]}"}; do rm -rf "pr-$n"; done
+
+          # --- 3: size backstop --------------------------------------------
+          # Oldest mtime first, so the previews a reviewer is most likely to be
+          # looking at right now are the last to go.
+          total() { du -sm --exclude=.git . 2>/dev/null | cut -f1; }
+          while [ "$(total)" -gt "$BUDGET_MIB" ]; do
+            victim=$(find . -maxdepth 1 -type d -name 'pr-*' -printf '%T@ %f\n' 2>/dev/null | sort -n | head -1 | cut -d' ' -f2-)
+            [ -n "$victim" ] || { echo "::warning::over budget with no preview left to evict"; break; }
+            echo "$victim: evicted for size (total $(total) MiB > ${BUDGET_MIB} MiB)"
+            rm -rf "$victim"
+            removed+=("${victim#pr-}")
+          done
+
+          echo "removed ${#removed[@]} preview(s); $(total) MiB remain"
+          ./bin/reindex.sh
+
+          if [ "${DRY_RUN:-false}" = "true" ]; then
+            echo "dry run — restoring"
+            git checkout -- . && git clean -fdq
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "nothing to evict"
+            exit 0
+          fi
+          git commit -q -m "evict: remove ${#removed[@]} preview(s)"
+          git push origin HEAD:main
