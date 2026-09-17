@@ -25,6 +25,14 @@ bytes that changed.
 Keeping them apart also keeps the blast radius small: a broken preview job cannot take the
 documentation offline, and the two do not share a 1 GB site budget or a git history.
 
+## Write access
+
+`gnolang/gno` publishes here with a **deploy key** — a write-enabled key registered on this
+repository, whose private half is the `PREVIEWS_DEPLOY_KEY` secret over there. Deliberately
+not a fine-grained personal access token: a deploy key cannot reach any other repository, it
+does not expire, and it belongs to the repository rather than to a person, so preview commits
+are not attributed to whoever minted it and nothing breaks when that person rotates a token.
+
 ## Housekeeping
 
 Previews are deleted when their pull request closes. `evict.yml` additionally drops any
