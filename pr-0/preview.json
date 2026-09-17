@@ -1,0 +1,36 @@
+{
+  "gnoweb": true,
+  "changed_realms": null,
+  "changed_pkgs": null,
+  "realms": [
+    "gno.land/r/docs/security_patterns",
+    "gno.land/r/gnoland/blog",
+    "gno.land/r/gnoland/boards2/v0",
+    "gno.land/r/gnoland/home"
+  ],
+  "dropped": 0,
+  "dirs": [
+    "examples/gno.land/r/docs/security_patterns",
+    "examples/gno.land/r/gnoland/blog",
+    "examples/gno.land/r/gnoland/boards2/v0",
+    "examples/gno.land/r/gnoland/home"
+  ],
+  "shots": [
+    {
+      "file": "_shots/home.png",
+      "label": "Home — rendered markdown"
+    },
+    {
+      "file": "_shots/source.png",
+      "label": "Source view"
+    },
+    {
+      "file": "_shots/help.png",
+      "label": "Help / actions forms"
+    },
+    {
+      "file": "_shots/docs.png",
+      "label": "Long-form docs"
+    }
+  ]
+}

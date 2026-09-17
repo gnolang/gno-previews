@@ -1,0 +1,26 @@
+rthc_afterfork:35891 drown 0 rthc entries
+Loader      ┃ I workspace detected root=/private/tmp/gno-preview-wt/examples
+Accounts    ┃ W keybase directory does not exist, no local keys will be imported path=/tmp/prev-demo/.gnodev-8971
+Accounts    ┃ W default address created name=_default#g1jg8m addr=g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 mnemonic="source bonus chronic canvas draft south burst lottery vacant surface solve popular case indicate oppose farm nothing bullet exhibit title speed wink action roast"
+Proxy       ┃ I lazy loading is enabled. packages will be loaded only upon a request via a query or transaction. loader=native
+Node        ┃ I packages paths="[gno.land/r/docs/security_patterns gno.land/r/gnoland/blog gno.land/r/gnoland/boards2/v0 gno.land/r/gnoland/home]"
+Loader      ┃ I loaded root root=/tmp/gno-preview-wt/examples/gno.land/r/docs/security_patterns packages=1
+Loader      ┃ I loaded root root=/tmp/gno-preview-wt/examples/gno.land/r/gnoland/blog packages=1
+Loader      ┃ I loaded root root=/tmp/gno-preview-wt/examples/gno.land/r/gnoland/boards2/v0 packages=1
+Loader      ┃ I loaded root root=/tmp/gno-preview-wt/examples/gno.land/r/gnoland/home packages=1
+GnoWeb      ┃ I using default package path=gno.land/r/docs/security_patterns
+Watcher     ┃ I watcher disabled (--no-watch)
+Event       ┃ I sending event to clients clients=0 type=NODE_RESET event={}
+GnoWeb      ┃ I gnoweb started lisn=http://127.0.0.1:8971
+            ┃ I node is ready took=3.51029075s
+GnoWeb      ┃ E failed to render index component error="write tcp 127.0.0.1:8971->127.0.0.1:53958: write: broken pipe"
+GnoWeb      ┃ W file not found path=vm/qfile data=gno.land/r/docs/security_patterns/README.md error="file is not available"
+GnoWeb      ┃ W fetch README.md path=/r/docs/security_patterns error="file not found"
+GnoWeb      ┃ W file not found path=vm/qfile data=gno.land/r/gnoland/blog/README.md error="file is not available"
+GnoWeb      ┃ W fetch README.md path=/r/gnoland/blog error="file not found"
+GnoWeb      ┃ W file not found path=vm/qfile data=gno.land/r/gnoland/home/README.md error="file is not available"
+GnoWeb      ┃ W fetch README.md path=/r/gnoland/home error="file not found"
+GnoWeb      ┃ W package not found path=vm/qrender data=gno.land/r/docs: error="invalid package path"
+GnoWeb      ┃ W package not found path=vm/qrender data=gno.land/r/gnoland: error="invalid package path"
+GnoWeb      ┃ W package not found path=vm/qrender data=gno.land/r/gnoland/boards2: error="invalid package path"
+captured terminated, exiting...
