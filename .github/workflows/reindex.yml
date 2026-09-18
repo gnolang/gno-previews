@@ -1,0 +1,48 @@
+# Regenerates index.html whenever the set of previews changes.
+#
+# This used to be a `./bin/reindex.sh` call inside gnolang/gno's privileged
+# publishing job — which meant that job executed a script from this repository,
+# an unprotected branch, while holding a token with `pull-requests: write` on
+# gnolang/gno. Anyone able to push here could have rewritten the script to act
+# as github-actions[bot] over there. Nothing in gnolang/gno runs code from this
+# repository any more; the index is this repository's own business.
+#
+# No loop: pushes made with GITHUB_TOKEN do not trigger workflows, so the commit
+# below cannot re-trigger this. The publishing push (deploy key) does.
+name: reindex
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: previews-write
+  cancel-in-progress: false
+
+jobs:
+  reindex:
+    if: github.repository == 'gnolang/gno-previews'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # to commit the regenerated landing page
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Regenerate index.html
+        run: |
+          set -euo pipefail
+          git fetch -q origin main
+          git reset -q --hard origin/main
+          ./bin/reindex.sh
+          if git diff --quiet -- index.html; then
+            echo "index.html already current"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -q -m "chore: regenerate the preview index"
+          git push -q origin HEAD:main
